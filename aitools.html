@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Dima.fyi — AI Tools</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playball&display=swap" rel="stylesheet">
+<style>
+.loader-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#000;display:flex;align-items:center;justify-content:center;z-index:9999}
+.loader{width:40px;height:40px;border:3px solid rgba(255,255,255,0.1);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#000;--bg2:#0a0a0a;--bg3:#111;
+  --border:#1a1a1a;--border2:#222;
+  --text:#ededed;--text2:#888;--text3:#666;
+  --glass:rgba(255,255,255,0.06);--glass2:rgba(255,255,255,0.08);
+  --accent:#a78bfa;--green:#4ade80;--red:#f87171;
+  --blur:blur(40px) saturate(180%);
+  --radius:12px;--radius2:16px;
+}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text)}
+#app{display:flex;flex-direction:column;height:100%;max-width:480px;margin:0 auto}
+
+.top-bar{padding:16px;display:flex;align-items:center;gap:10px;flex-shrink:0;background:transparent;position:relative;z-index:10}
+.top-bar h1{font-size:26px;font-weight:400;flex:1;font-family:'Playball',cursive;letter-spacing:0.5px}
+.stats-pill{font-size:11px;padding:4px 10px;border-radius:20px;background:var(--glass);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid var(--border);color:var(--text2)}
+
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:70px}
+.content::-webkit-scrollbar{width:3px}
+.content::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+.hero-section{background:var(--bg);padding:10px 20px 32px;position:relative;min-height:380px;display:flex;flex-direction:column;justify-content:center}
+.hero-section::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at top,rgba(167,139,250,0.15) 0%,transparent 60%);pointer-events:none}
+.hero-content{position:relative;z-index:1;max-width:400px;margin:0 auto;text-align:center}
+
+.hero-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:100px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);font-size:11px;font-weight:600;color:var(--text2);margin-bottom:20px}
+.hero-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+.hero-title{font-size:48px;font-weight:700;margin-bottom:8px;background:linear-gradient(180deg,#fff 0%,rgba(255,255,255,0.6) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-0.02em}
+
+.hero-subtitle{font-size:13px;color:var(--text3);margin-bottom:24px;font-weight:500}
+
+.hero-desc{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:24px}
+
+.hero-tags{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:28px}
+.hero-tag{padding:5px 12px;border-radius:100px;font-size:11px;font-weight:500;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:var(--text2);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+
+.hero-btn-wrap{display:flex;flex-direction:column;gap:10px;align-items:center}
+.hero-btn-wrap .v-btn{min-width:200px}
+
+.v-btn{padding:12px 20px;border-radius:8px;border:none;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.v-btn.primary{background:#fff;color:#000}
+.v-btn.primary:hover{background:#e0e0e0}
+.v-btn.primary:active{transform:scale(.98)}
+.v-btn.glass{position:relative;overflow:hidden;background:rgba(255,255,255,0.06);color:var(--text);border:1px solid rgba(255,255,255,0.1);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);box-shadow:inset 0 1px 0 rgba(255,255,255,0.1),0 2px 8px rgba(0,0,0,0.4)}
+.v-btn.glass::before{content:'';position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,0.08) 0%,transparent 100%);border-radius:8px 8px 0 0;pointer-events:none}
+.v-btn.glass:hover{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.15)}
+.v-btn.glass:active{transform:scale(.98)}
+.v-btn.block{width:100%}
+.v-btn svg{width:18px;height:18px;stroke:currentColor;stroke-width:2;fill:none}
+
+.section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text3);margin-bottom:12px;margin-top:8px}
+
+.v-card{border-radius:var(--radius);overflow:hidden;background:var(--bg2);border:1px solid var(--border);margin-bottom:10px;cursor:pointer;transition:all .15s;position:relative}
+.v-card:hover{border-color:#333}
+.v-card:active{transform:scale(.98)}
+.v-card-body{padding:14px 16px;position:relative;z-index:1}
+.v-card-title{font-size:14px;font-weight:600;color:var(--text)}
+.v-card-sub{font-size:12px;color:var(--text3);margin-top:3px}
+.v-card-desc{font-size:12px;color:var(--text2);line-height:1.6;margin-top:8px}
+.v-card-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.v-card-tag{padding:3px 8px;border-radius:6px;font-size:10px;font-weight:600;background:var(--glass);border:1px solid var(--border);color:var(--text2)}
+.v-card-tag.accent{background:rgba(167,139,250,0.15);border-color:rgba(167,139,250,0.2);color:var(--accent)}
+.v-badge{display:inline-block;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
+.v-badge.free{background:#0a2a1a;color:var(--green)}
+.v-badge.pro{background:#1a0a2a;color:var(--accent)}
+.v-badge.danger{background:rgba(248,113,113,0.15);color:var(--red)}
+.v-card .v-badge{position:absolute;top:12px;right:12px;z-index:2}
+
+.v-input{width:100%;padding:12px 14px;border-radius:8px;background:var(--bg2);border:1px solid var(--border2);color:var(--text);font-size:14px;outline:none;transition:border-color .15s;font-family:inherit}
+.v-input:focus{border-color:var(--accent)}
+.v-input::placeholder{color:#444}
+
+.v-chip{display:inline-block;padding:6px 14px;border-radius:6px;background:#111;border:1px solid var(--border2);font-size:12px;font-weight:500;color:#888;cursor:pointer;transition:all .15s;font-family:inherit;white-space:nowrap}
+.v-chip.active{background:#fff;color:#000;border-color:#fff}
+.v-chip:hover{border-color:#333}
+
+.form-row{margin-bottom:14px}
+.form-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:6px}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:100;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.modal-overlay.show{display:flex}
+.modal{background:var(--bg);border-radius:var(--radius2) var(--radius2) 0 0;width:100%;max-width:480px;max-height:85vh;display:flex;flex-direction:column;animation:slideUp .25s ease;border:1px solid var(--border);border-bottom:none}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-header{padding:16px 20px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.modal-header h2{font-size:16px;font-weight:700;flex:1}
+.modal-close{width:28px;height:28px;border-radius:50%;background:var(--glass);border:1px solid var(--border);color:var(--text2);font-size:18px;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.modal-close:active{transform:scale(.9)}
+.modal-body{padding:16px 20px 24px;overflow-y:auto;flex:1}
+.modal-body::-webkit-scrollbar{width:3px}
+.modal-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.modal-body pre{font-size:11px;color:var(--text2);white-space:pre-wrap;word-break:break-word;font-family:'SF Mono',Consolas,monospace;line-height:1.7;background:var(--bg2);padding:14px;border-radius:var(--radius);border:1px solid var(--border)}
+
+.result-block{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-top:16px;display:none}
+.result-block.show{display:block}
+.result-title{font-size:12px;font-weight:600;color:var(--green);margin-bottom:12px}
+.result-field{margin-bottom:10px}
+.result-label{font-size:10px;color:var(--text3);margin-bottom:4px;text-transform:uppercase}
+.result-value{font-size:12px;font-family:'SF Mono',Consolas,monospace;background:var(--bg);padding:10px;border-radius:6px;word-break:break-all;color:var(--text2)}
+
+.btn-row{display:flex;gap:8px;margin-top:8px}
+.btn-row .v-btn{flex:1}
+
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:var(--radius);background:rgba(255,255,255,0.1);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid rgba(255,255,255,0.1);color:#fff;font-size:13px;font-weight:600;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+
+.bottom-bar{position:fixed;bottom:10px;left:0;right:0;padding:0 16px 8px;z-index:50;max-width:480px;margin:0 auto}
+.tabbar{display:flex;align-items:center;justify-content:center;padding:6px;border-radius:28px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),inset 0 -1px 0 rgba(0,0,0,0.3),0 4px 24px rgba(0,0,0,0.5);position:relative;overflow:hidden}
+.tabbar::before{content:'';position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,0.06) 0%,transparent 100%);border-radius:28px 28px 0 0;pointer-events:none}
+.tabbar .bt{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;border-radius:22px;font-size:11px;font-weight:600;color:rgba(255,255,255,0.35);cursor:pointer;transition:all .3s cubic-bezier(0.4,0,0.2,1);position:relative;z-index:1}
+.tabbar .bt .bt-icon{display:flex;align-items:center;justify-content:center}
+.tabbar .bt .bt-icon svg{width:22px;height:22px;stroke:currentColor;stroke-width:2;fill:none}
+.tabbar .bt.active{color:#fff;background:rgba(255,255,255,0.1);box-shadow:inset 0 1px 0 rgba(255,255,255,0.12),inset 0 -1px 0 rgba(0,0,0,0.1),0 2px 8px rgba(0,0,0,0.3)}
+</style>
+</head>
+<body>
+<div class="loader-overlay" id="loader">
+  <div class="loader"></div>
+</div>
+<div id="app">
+  <div class="top-bar">
+    <h1>Dima.fyi</h1>
+    <span class="stats-pill">3 items</span>
+  </div>
+  <div class="content">
+    <div class="hero-section">
+      <div class="hero-content">
+        <div class="hero-title">getdesign.ai</div>
+        <div class="hero-subtitle">Генерация сайтов через AI</div>
+        <div class="hero-desc">
+          Gemini 3.1 Pro создаёт полноценные сайты по промпту. Создай аккаунт с любым балансом и Pro-подпиской.
+        </div>
+        <div class="hero-tags">
+          <span class="hero-tag">Gemini 3.1 Pro</span>
+          <span class="hero-tag">OpenRouter</span>
+          <span class="hero-tag">Liquid Glass</span>
+        </div>
+        <div class="hero-btn-wrap">
+          <button class="v-btn primary" onclick="openCreateModal()">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            Создать аккаунт
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div style="padding:0 16px 24px">
+      <div class="section-label">Системный промпт AI</div>
+    
+    <div class="v-card" onclick="openModal('systemPrompt')">
+      <span class="v-badge pro">Core</span>
+      <div class="v-card-body">
+        <div class="v-card-title">Системный промпт генерации</div>
+        <div class="v-card-sub">Как AI создаёт сайты</div>
+        <div class="v-card-desc">Инструкция для Gemini: получать reference design, следовать CSS/шрифтам 100%, создавать полноценные multi-section сайты.</div>
+        <div class="v-card-tags">
+          <span class="v-card-tag accent">100% fidelity</span>
+          <span class="v-card-tag">liquid glass</span>
+          <span class="v-card-tag">multi-section</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="v-card" onclick="openModal('designPrompt1')">
+      <span class="v-badge danger">Leaked</span>
+      <div class="v-card-body">
+        <div class="v-card-title">WEB3_DARK_KINETIC_01</div>
+        <div class="v-card-sub">Reference design для Web3</div>
+        <div class="v-card-desc">Точный дизайн-рецепт: шрифты General Sans, видео-фон, glassmorphic navbar, gradient heading. Используется при генерации.</div>
+        <div class="v-card-tags">
+          <span class="v-card-tag">General Sans</span>
+          <span class="v-card-tag">Video BG</span>
+          <span class="v-card-tag accent">Liquid Glass</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="v-card" onclick="openModal('allPrompts')">
+      <span class="v-badge pro">Full</span>
+      <div class="v-card-body">
+        <div class="v-card-title">Библиотека дизайн-промптов</div>
+        <div class="v-card-sub">Все reference designs</div>
+        <div class="v-card-desc">Полная коллекция: CSS значения, шрифты, видео URLs, анимации. То что передаётся в AI при генерации.</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="bottom-bar">
+    <div class="tabbar">
+      <div class="bt" data-page="index">
+        <div class="bt-icon"><svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></div>
+        Ресурсы
+      </div>
+      <div class="bt" data-page="free">
+        <div class="bt-icon"><svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 4.8 0 0 1 12 8a4.8 4.8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg></div>
+        Халява
+      </div>
+      <div class="bt active" data-page="aitools">
+        <div class="bt-icon"><svg viewBox="0 0 24 24"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg></div>
+        AI Tools
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="createModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Создать аккаунт</h2>
+      <button class="modal-close" onclick="closeCreateModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-label">Баланс кредитов</div>
+        <input type="number" class="v-input" id="credits" value="100" min="1" max="499" placeholder="1-499">
+      </div>
+      <div class="form-row">
+        <div class="form-label">Роль</div>
+        <div style="display:flex;gap:6px">
+          <div class="v-chip" data-tier="free">Free</div>
+          <div class="v-chip" data-tier="basic">Basic</div>
+          <div class="v-chip active" data-tier="pro">Pro</div>
+        </div>
+      </div>
+      <button class="v-btn primary block" id="createBtn" onclick="createAccount()" style="margin-top:16px">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        Создать аккаунт
+      </button>
+      <div class="result-block" id="result">
+        <div class="result-title">Аккаунт создан</div>
+        <div class="result-field">
+          <div class="result-label">Email</div>
+          <div class="result-value" id="resultEmail"></div>
+        </div>
+        <div class="result-field">
+          <div class="result-label">Пароль</div>
+          <div class="result-value" id="resultPassword"></div>
+        </div>
+        <div class="result-field">
+          <div class="result-label">User ID</div>
+          <div class="result-value" id="resultUserId"></div>
+        </div>
+        <div class="result-field">
+          <div class="result-label">JWT Token</div>
+          <div class="result-value" id="resultJwt" style="max-height:60px;overflow:hidden;text-overflow:ellipsis"></div>
+        </div>
+        <div class="result-field">
+          <div class="result-label">Кредиты</div>
+          <div class="result-value" id="resultCredits"></div>
+        </div>
+        <div class="btn-row">
+          <button class="v-btn glass" onclick="copyJwt()">JWT</button>
+          <button class="v-btn glass" onclick="copyPassword()">Пароль</button>
+          <button class="v-btn glass" onclick="window.open('https://getdesign.ai','_blank')">Сайт</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle"></h2>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://wygsxzsouxhslkxuktod.supabase.co';
+const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5Z3N4enNvdXhoc2xreHVrdG9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI2NDU1MDksImV4cCI6MjA3ODIyMTUwOX0._45Y-UH2MYmlsXUTmtf9N9U6KDrldyqhYUU9hhLYw7U';
+
+let currentJwt = '';
+let currentPassword = '';
+let selectedTier = 'pro';
+
+const FIRST_NAMES = ['John','Mike','David','Alex','James','Chris','Daniel','Kevin','Brian','Steven','Sarah','Emily','Anna','Lisa','Kate','Maria','Nancy','Betty','Helen','Sandra'];
+const LAST_NAMES = ['Smith','Johnson','Williams','Brown','Jones','Davis','Miller','Wilson','Moore','Taylor','Anderson','Thomas','Jackson','White','Harris','Martin','Thompson','Garcia','Martinez','Robinson'];
+const DOMAINS = ['gmail.com','yahoo.com','outlook.com','hotmail.com','icloud.com','mail.com','proton.me'];
+
+function generateFakeEmail(){
+  const first = FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)];
+  const last = LAST_NAMES[Math.floor(Math.random() * LAST_NAMES.length)];
+  const num = Math.floor(Math.random() * 900) + 100;
+  const domain = DOMAINS[Math.floor(Math.random() * DOMAINS.length)];
+  return `${first}${last}${num}@${domain}`;
+}
+
+function generatePassword(){
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%';
+  let pass = '';
+  for(let i = 0; i < 12; i++){
+    pass += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return pass;
+}
+
+const SYSTEM_PROMPT = `You are an expert web developer that generates production-ready, fully self-contained HTML websites. You create beautiful, modern websites with sophisticated aesthetics.
+
+## HOW YOU WORK
+
+You will receive TWO inputs:
+1. A reference design prompt — precise, curated design specification from library
+2. The user's request — what they want built
+
+## YOUR JOB
+
+Build a COMPLETE website using the reference design's exact visual system.
+
+## CRITICAL: 100% FIDELITY TO REFERENCE PROMPT
+
+- Liquid glass CSS — Copy exact CSS classes (.liquid-glass, .liquid-glass-strong)
+- Fonts — Use EXACT font families, weights, sizes
+- Colors — Use EXACT color values (hex, HSL, rgba)
+- Video URLs — Use EXACT video URLs from reference
+- Border radius, padding, margins — Use EXACT values
+- Animation keyframes and timing — Use EXACT values
+- CSS variables — Define them EXACTLY as specified
+- Backdrop-filter values, box-shadows, gradients — Copy EXACTLY
+
+You are NOT a designer making creative choices. You are a precise implementer.`;
+
+const DESIGN_PROMPT_1 = `PROMPT ID: WEB3_DARK_KINETIC_01
+
+DESCRIPTION: 
+Full-screen hero section for Web3 landing page
+
+SPECIFICATIONS:
+- Typography: General Sans from Fontshare (Weights: 300, 400, 500, 600)
+- Background: Pure black (#000000)
+- Video Layering: Fullscreen looping background, fixed, object-fit: cover, z-index: -2
+- Visual Overlay: 50% black solid overlay (rgba(0,0,0,0.5)), z-index: -1
+- Video URL: https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260217_030345_246c0224-10a4-422c-b324-070b7c0eceda.mp4
+
+NAVBAR ARCHITECTURE:
+- Background: Transparent container, top-fixed, padding 24px
+- CTA: "Layered construction" pill button with hover scale-down
+
+HERO COMPOSITION:
+- Container: Flex column, centered, max-width 800px
+- Badge Pill: rgba(255,255,255,0.05), 1px solid rgba(255,255,255,0.1)
+- Heading: 5rem+, -4% tracking, linear-gradient fill (white to grey)
+- Description: #a1a1aa, max-width 600px`;
+
+const ALL_PROMPTS = `Library of reference design prompts extracted via session injection.
+
+=== WEB3_DARK_KINETIC_01 ===
+
+Typography: General Sans (300, 400, 500, 600)
+Background: Pure black (#000000)
+Video URL: d8j0ntlcm91z4.cloudfront.net/user_38xz...
+Navbar: Transparent, 24px padding
+Hero: Flex centered, max-width 800px
+
+=== SHARED RESOURCES ===
+
+Video URLs (CloudFront):
+https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/...
+
+Fonts:
+- General Sans (Fontshare)
+- Instrument Serif
+- Inter
+- Manrope
+- Cabin
+
+CSS Classes:
+- .liquid-glass
+- .liquid-glass-strong
+- .glassmorphism
+
+Key CSS Patterns:
+- backdrop-filter: blur(40px) saturate(180%)
+- box-shadow: inset 0 1px 0 rgba(255,255,255,0.1)
+- background: rgba(255,255,255,0.06)`;
+
+const loader = document.getElementById('loader');
+const toast = document.getElementById('toast');
+
+setTimeout(()=>{if(loader)loader.style.display='none'},100);
+
+function showToast(msg){
+  toast.textContent=msg;
+  toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'),1800);
+}
+
+document.querySelectorAll('.v-chip[data-tier]').forEach(chip=>{
+  chip.addEventListener('click',function(){
+    document.querySelectorAll('.v-chip[data-tier]').forEach(c=>c.classList.remove('active'));
+    this.classList.add('active');
+    selectedTier = this.dataset.tier;
+  });
+});
+
+function openCreateModal(){
+  document.getElementById('createModal').classList.add('show');
+}
+
+function closeCreateModal(){
+  document.getElementById('createModal').classList.remove('show');
+}
+
+function openModal(id){
+  const overlay = document.getElementById('modalOverlay');
+  const title = document.getElementById('modalTitle');
+  const body = document.getElementById('modalBody');
+  
+  if(id === 'systemPrompt'){
+    title.textContent = 'Системный промпт генерации';
+    body.innerHTML = '<pre>' + SYSTEM_PROMPT + '</pre>';
+  }else if(id === 'designPrompt1'){
+    title.textContent = 'WEB3_DARK_KINETIC_01';
+    body.innerHTML = '<pre>' + DESIGN_PROMPT_1 + '</pre>';
+  }else if(id === 'allPrompts'){
+    title.textContent = 'Библиотека дизайн-промптов';
+    body.innerHTML = '<pre>' + ALL_PROMPTS + '</pre>';
+  }
+  
+  overlay.classList.add('show');
+}
+
+function closeModal(){
+  document.getElementById('modalOverlay').classList.remove('show');
+}
+
+async function createAccount(){
+  const btn = document.getElementById('createBtn');
+  const credits = document.getElementById('credits').value;
+  
+  if(credits < 1 || credits > 499){
+    showToast('Кредиты: 1-499');
+    return;
+  }
+  
+  btn.disabled = true;
+  btn.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg> Создание...';
+  
+  const email = generateFakeEmail();
+  const password = generatePassword();
+  
+  try{
+    const signupRes = await fetch(SUPABASE_URL + '/auth/v1/signup', {
+      method: 'POST',
+      headers: {
+        'apikey': ANON_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({email, password})
+    });
+    
+    const signupData = await signupRes.json();
+    
+    if(signupData.error){
+      throw new Error(signupData.error.message);
+    }
+    
+    const jwt = signupData.access_token;
+    const userId = signupData.user.id;
+    
+    currentJwt = jwt;
+    currentPassword = password;
+    
+    const creditsRes = await fetch(SUPABASE_URL + '/rest/v1/user_credits', {
+      method: 'POST',
+      headers: {
+        'apikey': ANON_KEY,
+        'Authorization': 'Bearer ' + jwt,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        credits_remaining: parseInt(credits),
+        credits_total: parseInt(credits),
+        tier: selectedTier
+      })
+    });
+    
+    document.getElementById('resultEmail').textContent = email;
+    document.getElementById('resultPassword').textContent = password;
+    document.getElementById('resultUserId').textContent = userId;
+    document.getElementById('resultJwt').textContent = jwt.slice(0,50) + '...';
+    document.getElementById('resultCredits').textContent = credits + ' кредитов, ' + selectedTier.toUpperCase();
+    document.getElementById('result').classList.add('show');
+    
+    showToast('Аккаунт создан');
+  }catch(err){
+    showToast('Ошибка: ' + err.message);
+  }
+  
+  btn.disabled = false;
+  btn.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Создать аккаунт';
+}
+
+function copyJwt(){
+  if(currentJwt){
+    navigator.clipboard.writeText(currentJwt).then(()=>{
+      showToast('JWT скопирован');
+    });
+  }
+}
+
+function copyPassword(){
+  if(currentPassword){
+    navigator.clipboard.writeText(currentPassword).then(()=>{
+      showToast('Пароль скопирован');
+    });
+  }
+}
+
+document.getElementById('createModal').onclick = (e)=>{
+  if(e.target.id === 'createModal') closeCreateModal();
+};
+
+document.getElementById('modalOverlay').onclick = (e)=>{
+  if(e.target.id === 'modalOverlay') closeModal();
+};
+
+document.querySelector('.bt[data-page="index"]').onclick = ()=>{window.location.href='index.html';};
+document.querySelector('.bt[data-page="free"]').onclick = ()=>{window.location.href='free.html';};
+
+if(window.Telegram&&window.Telegram.WebApp){window.Telegram.WebApp.ready();window.Telegram.WebApp.expand();}
+</script>
+</body>
+</html>

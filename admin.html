@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Admin — Халява</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#000;--bg2:#0a0a0a;--bg3:#111;
+  --border:#1a1a1a;--border2:#222;
+  --text:#ededed;--text2:#888;--text3:#666;
+  --glass:rgba(255,255,255,0.06);--glass2:rgba(255,255,255,0.08);
+  --accent:#a78bfa;--green:#4ade80;--red:#f87171;
+  --blur:blur(40px) saturate(180%);
+  --radius:12px;--radius2:16px;
+}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text)}
+
+#loginScreen{display:flex;align-items:center;justify-content:center;height:100%;width:100%;padding:16px}
+.login-box{width:100%;max-width:400px;padding:32px;border-radius:var(--radius2);background:var(--bg2);border:1px solid var(--border);text-align:center}
+.login-box h1{font-size:20px;font-weight:700;margin-bottom:8px;color:var(--text)}
+.login-box p{font-size:12px;color:var(--text3);margin-bottom:24px}
+.login-error{font-size:12px;color:var(--red);margin-top:12px;min-height:18px}
+
+#adminPanel{display:none;flex-direction:column;height:100%}
+#adminPanel.show{display:flex}
+
+.admin-header{padding:16px;display:flex;align-items:center;border-bottom:1px solid var(--border);flex-shrink:0}
+.admin-header h1{font-size:18px;font-weight:700}
+.guide-count-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;background:var(--glass);font-size:12px;color:var(--text2);margin-left:12px}
+.logout-btn{margin-left:auto;padding:8px 16px;border-radius:8px;background:var(--glass);border:1px solid var(--border);color:var(--text2);font-size:12px;cursor:pointer;font-family:inherit;transition:all .15s}
+.logout-btn:active{background:rgba(248,113,113,0.1);color:var(--red);border-color:rgba(248,113,113,0.2)}
+
+.admin-tabs{display:flex;padding:8px 16px;gap:4px;border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0}
+.admin-tabs .tab-btn{flex:1;padding:12px 8px;border-radius:8px;background:transparent;border:1px solid transparent;color:var(--text3);font-size:13px;font-weight:600;cursor:pointer;text-align:center;font-family:inherit;transition:all .15s}
+.admin-tabs .tab-btn:active{transform:scale(.97)}
+.admin-tabs .tab-btn.active{background:var(--glass);border-color:var(--border);color:var(--text)}
+.admin-tabs .tab-btn .tab-icon{display:block;margin:0 auto 4px}
+.admin-tabs .tab-btn .tab-icon svg{width:20px;height:20px;stroke:currentColor;stroke-width:2;fill:none}
+
+.tab-content{display:none;flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch}
+.tab-content.active{display:block}
+.tab-content::-webkit-scrollbar{width:3px}
+.tab-content::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+.guide-list-item{display:flex;align-items:center;gap:12px;padding:16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;cursor:pointer;transition:all .15s}
+.guide-list-item:active{transform:scale(.98)}
+.guide-list-item .gli-icon{width:40px;height:40px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.guide-list-item .gli-icon svg{width:20px;height:20px;stroke:var(--accent);stroke-width:1.5;fill:none}
+.guide-list-item .gli-body{flex:1;min-width:0}
+.guide-list-item .gli-title{font-size:15px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.guide-list-item .gli-meta{font-size:12px;color:var(--text3);margin-top:2px}
+.guide-list-item .gli-status{font-size:11px;padding:4px 8px;border-radius:4px;font-weight:600}
+.guide-list-item .gli-status.works{background:rgba(74,222,128,0.1);color:var(--green)}
+.guide-list-item .gli-status.notworks{background:rgba(248,113,113,0.1);color:var(--red)}
+.guide-list-item .gli-delete{padding:8px;border-radius:8px;background:transparent;border:1px solid var(--border);color:var(--text3);cursor:pointer;transition:all .15s}
+.guide-list-item .gli-delete:active{background:rgba(248,113,113,0.1);color:var(--red);border-color:rgba(248,113,113,0.2)}
+.guide-list-item .gli-delete svg{width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none}
+
+.form-section{margin-bottom:20px}
+.form-section .field-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:8px}
+.form-section .v-input{width:100%;padding:14px 16px;border-radius:10px;background:var(--bg2);border:1px solid var(--border2);color:var(--text);font-size:16px;outline:none;font-family:inherit;transition:border-color .15s}
+.form-section .v-input:focus{border-color:#fff}
+.form-section .v-input::placeholder{color:#444}
+.form-section textarea.v-input{min-height:100px;resize:vertical;line-height:1.5}
+.form-section select.v-input{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;cursor:pointer}
+.form-section .checkbox-label{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--text2);cursor:pointer}
+.form-section .checkbox-label input[type="checkbox"]{width:20px;height:20px;accent-color:var(--accent);cursor:pointer}
+.form-section .field-hint{font-size:11px;color:var(--text3);margin-top:4px}
+
+.v-btn{padding:14px 24px;border-radius:10px;border:none;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
+.v-btn:active{transform:scale(.97)}
+.v-btn.primary{background:#fff;color:#000}
+.v-btn.glass{background:var(--glass);border:1px solid rgba(255,255,255,0.1);color:var(--text);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur)}
+.v-btn.danger{background:rgba(248,113,113,0.1);color:var(--red);border:1px solid rgba(248,113,113,0.2)}
+.v-btn.sm{padding:10px 16px;font-size:13px}
+.v-btn.block{width:100%}
+.btn-row{display:flex;gap:8px;margin-top:12px}
+.btn-row .v-btn{flex:1}
+
+.divider{height:1px;background:var(--border);margin:20px 0}
+
+.step-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.step-card .step-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.step-card .step-num{width:28px;height:28px;border-radius:50%;background:var(--glass);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--text2)}
+.step-card textarea{min-height:60px}
+.step-card .step-url-input{font-size:13px;margin-top:8px}
+.step-card .delete-step-btn{margin-left:auto;padding:6px;border-radius:6px;background:transparent;border:none;color:var(--text3);cursor:pointer}
+.step-card .delete-step-btn:active{color:var(--red)}
+.step-card .delete-step-btn svg{width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none}
+
+.img-step-card{background:rgba(167,139,250,0.05);border:2px dashed rgba(167,139,250,0.2);border-radius:var(--radius);padding:16px;margin-bottom:12px;display:flex;align-items:center;gap:12px}
+.img-step-card .img-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent);white-space:nowrap}
+.img-step-card input{flex:1}
+.img-step-card .delete-btn{padding:6px;border-radius:6px;background:transparent;border:none;color:var(--text3);cursor:pointer}
+.img-step-card .delete-btn:active{color:var(--red)}
+.img-step-card .delete-btn svg{width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none}
+
+.add-step-btn{width:100%;padding:14px;border-radius:var(--radius);background:rgba(167,139,250,0.05);border:2px dashed rgba(167,139,250,0.2);color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;text-align:center;font-family:inherit;transition:all .15s}
+.add-step-btn:active{transform:scale(.98)}
+
+.error-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.error-card .error-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.error-card .error-num{width:24px;height:24px;border-radius:50%;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--red)}
+.error-card textarea{min-height:60px}
+.error-card .delete-btn{margin-left:auto;padding:6px;border-radius:6px;background:transparent;border:none;color:var(--text3);cursor:pointer}
+.error-card .delete-btn:active{color:var(--red)}
+.error-card .delete-btn svg{width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none}
+
+.editing-header{display:none;margin-bottom:16px;padding:12px;background:var(--bg2);border-radius:8px;border:1px solid var(--border);align-items:center;gap:10px}
+.editing-header.show{display:flex}
+.editing-header .back-btn{padding:10px 16px;border-radius:8px;background:var(--glass);border:1px solid var(--border);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.editing-header .editing-title{flex:1;font-size:13px;color:var(--text2)}
+.editing-header .editing-title strong{color:var(--text)}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:var(--radius);background:rgba(255,255,255,0.1);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid rgba(255,255,255,0.1);color:#fff;font-size:13px;font-weight:600;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none;box-shadow:0 4px 24px rgba(0,0,0,0.3)}
+.toast.show{opacity:1}
+
+.empty-state{text-align:center;padding:40px 20px;color:var(--text3)}
+.empty-state svg{width:48px;height:48px;stroke:var(--text3);stroke-width:1.5;fill:none;margin-bottom:16px;opacity:.5}
+.empty-state .empty-title{font-size:15px;font-weight:600;color:var(--text2);margin-bottom:4px}
+.empty-state .empty-sub{font-size:13px}
+
+.upload-zone{border:2px dashed var(--border2);border-radius:var(--radius);padding:24px;text-align:center;transition:all .15s;cursor:pointer;min-height:140px;display:flex;align-items:center;justify-content:center}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--accent);background:rgba(167,139,250,0.05)}
+.upload-zone svg{stroke:var(--text3)}
+.upload-text{font-size:14px;color:var(--text2);margin-top:8px}
+.upload-text-sm{font-size:12px;color:var(--text3);margin-top:4px}
+.upload-link{color:var(--accent);cursor:pointer}
+.upload-preview{position:relative;width:100%}
+.upload-preview img{width:100%;max-height:200px;object-fit:cover;border-radius:8px}
+.remove-img-btn{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,0.7);border:1px solid var(--border);color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.remove-img-btn:hover{background:var(--red);border-color:var(--red)}
+.upload-progress{width:100%}
+.progress-bar{height:8px;background:var(--bg3);border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;background:var(--accent);width:0%;transition:width .3s}
+.progress-text{font-size:12px;color:var(--text3);margin-top:8px}
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="login-box">
+    <h1>Admin Panel</h1>
+    <p>Халява — управление гайдами</p>
+    <input type="password" class="v-input" id="loginPass" placeholder="Пароль" autocomplete="off" style="font-size:16px">
+    <div class="login-error" id="loginError"></div>
+    <button class="v-btn glass block" style="margin-top:16px" onclick="tryLogin()">Войти</button>
+  </div>
+</div>
+
+<div id="adminPanel">
+  <div class="admin-header">
+    <h1>Admin</h1>
+    <div class="guide-count-badge"><span id="guideCount">0</span> гайдов</div>
+    <div id="supabaseStatus" style="font-size:12px;padding:4px 8px;border-radius:6px;margin-right:8px" onclick="testSupabase()">
+      ⚪ Supabase: проверка...
+    </div>
+    <button class="logout-btn" onclick="doLogout()">Выйти</button>
+  </div>
+  
+  <div class="admin-tabs">
+    <button class="tab-btn active" data-tab="list">
+      <span class="tab-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span>
+      Гайды
+    </button>
+    <button class="tab-btn" data-tab="editor">
+      <span class="tab-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></span>
+      Редактор
+    </button>
+    <button class="tab-btn" data-tab="settings">
+      <span class="tab-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+      Настройки
+    </button>
+  </div>
+  
+  <div class="tab-content active" id="tabList">
+    <div id="guideList"></div>
+    <button class="v-btn glass block" onclick="switchTab('editor');resetForm()">+ Новый гайд</button>
+  </div>
+  
+  <div class="tab-content" id="tabEditor">
+    <div class="editing-header" id="editingHeader">
+      <button class="back-btn" onclick="resetForm();switchTab('list')">← Назад</button>
+      <span class="editing-title">Редактирование: <strong id="editingTitle"></strong></span>
+    </div>
+    
+    <div class="form-section">
+      <div class="field-label">Заголовок</div>
+      <input type="text" class="v-input" id="fTitle" placeholder="Название гайда">
+    </div>
+    
+    <div class="form-section">
+      <div class="field-label">Описание</div>
+      <textarea class="v-input" id="fPreview" placeholder="Краткое описание..."></textarea>
+    </div>
+    
+    <div class="form-section">
+      <div class="field-label">Превью картинка</div>
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileSelect(event)">
+        <div class="upload-placeholder" id="uploadPlaceholder">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div class="upload-text">Перетащи картинку сюда</div>
+          <div class="upload-text-sm">или <span class="upload-link" onclick="document.getElementById('fileInput').click()">выбери файл</span></div>
+        </div>
+        <div class="upload-preview" id="uploadPreview" style="display:none">
+          <img id="previewImg" src="" alt="">
+          <button class="remove-img-btn" onclick="removeImage(event)">×</button>
+        </div>
+        <div class="upload-progress" id="uploadProgress" style="display:none">
+          <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+          <div class="progress-text">Загрузка...</div>
+        </div>
+      </div>
+      <div class="field-hint">Рекомендуемый размер: 1200×675 (16:9)</div>
+      <input type="hidden" id="fThumb">
+    </div>
+    
+    <div class="form-section">
+      <div class="field-label">Статус</div>
+      <select class="v-input" id="fStatus">
+        <option value="works">Работает</option>
+        <option value="notworks">Не работает</option>
+      </select>
+    </div>
+    
+    <div class="form-section">
+      <div class="field-label">Теги</div>
+      <label class="checkbox-label">
+        <input type="checkbox" id="fTagAI" checked> AI
+      </label>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <div class="form-section">
+      <div class="field-label">Шаги</div>
+      <div id="stepsContainer"></div>
+      <div class="btn-row">
+        <button class="v-btn glass sm" onclick="addStep()">+ Шаг</button>
+        <button class="v-btn glass sm" onclick="addImageStep()">+ Картинка</button>
+      </div>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <div class="form-section">
+      <div class="field-label">Возможные ошибки</div>
+      <div id="errorsContainer"></div>
+      <button class="v-btn glass sm" onclick="addError()">+ Ошибка</button>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <button class="v-btn primary block" onclick="saveGuide()">Сохранить гайд</button>
+  </div>
+  
+  <div class="tab-content" id="tabSettings">
+    <div class="form-section">
+      <div class="field-label">Экспорт всех гайдов</div>
+      <button class="v-btn glass block" onclick="exportJSON()">Скопировать JSON</button>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <div class="form-section">
+      <div class="field-label">Импорт гайдов</div>
+      <textarea class="v-input" id="importText" rows="4" placeholder="Вставьте JSON массив..."></textarea>
+      <button class="v-btn glass block" onclick="doImport()">Импортировать</button>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <div class="form-section">
+      <button class="v-btn danger block" onclick="clearAll()">Удалить все гайды</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const PASSWORD='dima2026';
+let editingId=null;
+let steps=[];
+let errors=[];
+let supabaseClient=null;
+let supabaseReady=false;
+
+if(typeof window.supabase!=='undefined' && typeof SUPABASE_URL!=='undefined' && SUPABASE_URL!=='YOUR_SUPABASE_URL'){
+  supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+  supabaseReady=true;
+}
+
+async function testSupabase(){
+  const el=document.getElementById('supabaseStatus');
+  if(!el)return;
+  
+  if(!supabaseReady){
+    el.innerHTML='🔴 Supabase: не настроен';
+    el.style.background='#fee2e2';
+    el.style.color='#dc2626';
+    return;
+  }
+  
+  el.innerHTML='🟡 Supabase: проверка...';
+  el.style.background='#fef3c7';
+  el.style.color='#d97706';
+  
+  try{
+    const{data,error}=await supabaseClient.from('guides').select('*').order('updated_at',{ascending:false});
+    if(error)throw error;
+    
+    supabaseGuides=data||[];
+    
+    const{data:storageData,error:storageError}=await supabaseClient.storage.from('images').list('',{limit:1});
+    if(storageError)throw storageError;
+    
+    el.innerHTML='🟢 Supabase: '+supabaseGuides.length+' гайдов';
+    el.style.background='#dcfce7';
+    el.style.color='#16a34a';
+    renderGuideList();
+    showToast('Загружено '+supabaseGuides.length+' гайдов из облака');
+  }catch(err){
+    el.innerHTML='🔴 Supabase: ошибка';
+    el.style.background='#fee2e2';
+    el.style.color='#dc2626';
+    showToast('Ошибка: '+(err.message||err));
+    console.error('Supabase error:',err);
+  }
+}
+
+const HARDCODED_GUIDES=[
+  {id:'fireworks-50',title:'Fireworks AI — $50 бесплатно',tags:['AI','Работает'],status:'works',thumb:null,
+   preview:'Регистрация на Fireworks AI с временной почтой и виртуальной картой — получаем $50 на аккаунт',
+   errors:['Account pawose-sboqzi3qo3b0 is suspended — значит карта уже использовалась, пробуем другую'],
+   steps:[
+     {text:'Переходим на сайт fireworks.ai (включаем VPN)'},
+     {text:'Регистрируемся через временную почту tempamail.com'},
+     {text:'Генерируем виртуальную карту chkr.cc'},
+     {text:'При генерации указываем бин 5154620022'},
+     {text:'Генерируем 100 карт, запускаем поиск валидных'},
+     {text:'После регистрации идем в billing и добавляем карту'},
+     {text:'Нам выдают $50, API ключ создаем в API Keys (сохраняем его)'},
+   ]},
+];
+
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),1800);
+}
+
+const uploadZone=document.getElementById('uploadZone');
+const fileInput=document.getElementById('fileInput');
+
+if(uploadZone){
+  uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.classList.add('dragover')});
+  uploadZone.addEventListener('dragleave',e=>{e.preventDefault();uploadZone.classList.remove('dragover')});
+  uploadZone.addEventListener('drop',e=>{
+    e.preventDefault();
+    uploadZone.classList.remove('dragover');
+    const files=e.dataTransfer.files;
+    if(files.length)uploadFile(files[0]);
+  });
+  uploadZone.addEventListener('click',()=>fileInput.click());
+}
+
+function handleFileSelect(e){
+  if(e.target.files.length)uploadFile(e.target.files[0]);
+}
+
+async function uploadFile(file){
+  if(!file.type.startsWith('image/')){showToast('Только изображения');return}
+  if(file.size>10*1024*1024){showToast('Максимум 10MB');return}
+  
+  const placeholder=document.getElementById('uploadPlaceholder');
+  const preview=document.getElementById('uploadPreview');
+  const progress=document.getElementById('uploadProgress');
+  const progressFill=document.getElementById('progressFill');
+  const previewImg=document.getElementById('previewImg');
+  
+  placeholder.style.display='none';
+  preview.style.display='none';
+  progress.style.display='block';
+  
+  const localUrl=URL.createObjectURL(file);
+  previewImg.src=localUrl;
+  
+  if(!supabaseReady){
+    document.getElementById('fThumb').value=localUrl;
+    progress.style.display='none';
+    preview.style.display='block';
+    showToast('Локальный режим — сохраните гайд');
+    return;
+  }
+  
+  try{
+    const fileName='img-'+Date.now()+'-'+Math.random().toString(36).substr(2,6)+'.'+file.name.split('.').pop();
+    progressFill.style.width='30%';
+    
+    const{data,error}=await supabaseClient.storage.from('images').upload(fileName,file,{
+      cacheControl:'3600',upsert:false
+    });
+    
+    if(error)throw error;
+    
+    progressFill.style.width='100%';
+    const{data:{publicUrl}}=supabaseClient.storage.from('images').getPublicUrl(fileName);
+    
+    document.getElementById('fThumb').value=publicUrl;
+    previewImg.src=publicUrl;
+    progress.style.display='none';
+    preview.style.display='block';
+    showToast('Изображение загружено');
+  }catch(err){
+    progress.style.display='none';
+    placeholder.style.display='block';
+    showToast('Ошибка загрузки: '+err.message);
+    console.error(err);
+  }
+}
+
+function removeImage(e){
+  e.stopPropagation();
+  document.getElementById('uploadPlaceholder').style.display='block';
+  document.getElementById('uploadPreview').style.display='none';
+  document.getElementById('fThumb').value='';
+  document.getElementById('previewImg').src='';
+}
+
+function loadThumbPreview(url){
+  if(!url)return;
+  const placeholder=document.getElementById('uploadPlaceholder');
+  const preview=document.getElementById('uploadPreview');
+  const previewImg=document.getElementById('previewImg');
+  placeholder.style.display='none';
+  preview.style.display='block';
+  previewImg.src=url;
+}
+
+function tryLogin(){
+  const p=document.getElementById('loginPass').value;
+  if(p===PASSWORD){
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('adminPanel').classList.add('show');
+    renderGuideList();
+    resetForm();
+    testSupabase();
+  }else{
+    document.getElementById('loginError').textContent='Неверный пароль';
+  }
+}
+document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')tryLogin()});
+
+function doLogout(){
+  document.getElementById('adminPanel').classList.remove('show');
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('loginPass').value='';
+  document.getElementById('loginError').textContent='';
+  editingId=null;
+}
+
+let supabaseGuides=[];
+
+function getAllGuides(){
+  const stored=JSON.parse(localStorage.getItem('admin_guides')||'[]');
+  const map=new Map();
+  HARDCODED_GUIDES.forEach(g=>map.set(g.id,g));
+  supabaseGuides.forEach(g=>map.set(g.id,g));
+  stored.forEach(g=>map.set(g.id,g));
+  return Array.from(map.values());
+}
+
+function getStoredGuides(){return JSON.parse(localStorage.getItem('admin_guides')||'[]')}
+function setStoredGuides(g){localStorage.setItem('admin_guides',JSON.stringify(g))}
+
+function renderGuideList(){
+  const guides=getAllGuides();
+  const el=document.getElementById('guideList');
+  const cnt=document.getElementById('guideCount');
+  cnt.textContent=guides.length;
+  
+  if(!guides.length){
+    el.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><div class="empty-title">Нет гайдов</div><div class="empty-sub">Создайте первый гайд</div></div>';
+    return;
+  }
+  
+  let html='';
+  guides.forEach(g=>{
+    const statusText=g.status==='works'?'Работает':'Не работает';
+    const statusClass=g.status==='works'?'works':'notworks';
+    const isHardcoded=HARDCODED_GUIDES.some(h=>h.id===g.id);
+    
+    html+=`<div class="guide-list-item" onclick="editGuide('${g.id}')">
+      <div class="gli-icon"><svg viewBox="0 0 24 24"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+      <div class="gli-body">
+        <div class="gli-title">${esc(g.title)}</div>
+        <div class="gli-meta">${isHardcoded?'Встроенный • ':'Сохранённый • '}${(g.steps||[]).length} шагов</div>
+      </div>
+      <span class="gli-status ${statusClass}">${statusText}</span>
+      <button class="gli-delete" onclick="event.stopPropagation();deleteGuide('${g.id}')" title="Удалить">
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      </button>
+    </div>`;
+  });
+  el.innerHTML=html;
+}
+
+function switchTab(tabId){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tabId));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.toggle('active',c.id==='tab'+tabId.charAt(0).toUpperCase()+tabId.slice(1)));
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.onclick=()=>switchTab(btn.dataset.tab);
+});
+
+function resetForm(){
+  editingId=null;
+  document.getElementById('fTitle').value='';
+  document.getElementById('fPreview').value='';
+  document.getElementById('fThumb').value='';
+  document.getElementById('fStatus').value='works';
+  document.getElementById('fTagAI').checked=true;
+  steps=[];
+  errors=[];
+  renderSteps();
+  renderErrors();
+  document.getElementById('editingHeader').classList.remove('show');
+  document.getElementById('editingTitle').textContent='';
+  document.getElementById('uploadPlaceholder').style.display='block';
+  document.getElementById('uploadPreview').style.display='none';
+  document.getElementById('previewImg').src='';
+}
+
+function genId(){return 'g-'+Date.now()+'-'+Math.random().toString(36).substr(2,6)}
+
+function addStep(text='',image=''){
+  steps.push({type:'step',text,image});
+  renderSteps();
+}
+
+function addImageStep(url=''){
+  steps.push({type:'image',url});
+  renderSteps();
+}
+
+function removeStep(i){
+  steps.splice(i,1);
+  renderSteps();
+}
+
+function renderSteps(){
+  const c=document.getElementById('stepsContainer');
+  if(!steps.length){
+    c.innerHTML='<div style="font-size:13px;color:var(--text3);padding:12px 0">Нет шагов</div>';
+    return;
+  }
+  let html='';
+  let stepNum=0;
+  steps.forEach((s,i)=>{
+    if(s.type==='step'){
+      stepNum++;
+      html+=`<div class="step-card">
+        <div class="step-header">
+          <div class="step-num">${stepNum}</div>
+          <button class="delete-step-btn" onclick="removeStep(${i})" title="Удалить">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <textarea class="v-input" rows="2" placeholder="Текст шага..." oninput="steps[${i}].text=this.value">${esc(s.text)}</textarea>
+        <input type="text" class="v-input step-url-input" placeholder="URL картинки (опционально)" value="${esc(s.image||'')}" oninput="steps[${i}].image=this.value">
+      </div>`;
+    }else{
+      html+=`<div class="img-step-card">
+        <span class="img-label">IMG</span>
+        <input type="text" class="v-input" placeholder="URL картинки" value="${esc(s.url||'')}" oninput="steps[${i}].url=this.value">
+        <button class="delete-btn" onclick="removeStep(${i})" title="Удалить">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>`;
+    }
+  });
+  c.innerHTML=html;
+}
+
+function addError(text=''){
+  errors.push(text);
+  renderErrors();
+}
+
+function removeError(i){
+  errors.splice(i,1);
+  renderErrors();
+}
+
+function renderErrors(){
+  const c=document.getElementById('errorsContainer');
+  if(!errors.length){
+    c.innerHTML='<div style="font-size:13px;color:var(--text3);padding:12px 0">Нет ошибок</div>';
+    return;
+  }
+  let html='';
+  errors.forEach((e,i)=>{
+    html+=`<div class="error-card">
+      <div class="error-header">
+        <div class="error-num">${i+1}</div>
+        <button class="delete-btn" onclick="removeError(${i})" title="Удалить">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <textarea class="v-input" rows="2" placeholder="Описание ошибки..." oninput="errors[${i}]=this.value">${esc(e)}</textarea>
+    </div>`;
+  });
+  c.innerHTML=html;
+}
+
+function saveGuide(){
+  const title=document.getElementById('fTitle').value.trim();
+  const preview=document.getElementById('fPreview').value.trim();
+  const thumb=document.getElementById('fThumb').value.trim()||null;
+  const status=document.getElementById('fStatus').value;
+  const tagAI=document.getElementById('fTagAI').checked;
+  
+  if(!title){showToast('Введите заголовок');return}
+  
+  const tags=[];
+  if(tagAI)tags.push('AI');
+  tags.push(status==='works'?'Работает':'Не работает');
+  
+  const cleanSteps=steps.map(s=>{
+    if(s.type==='step')return{text:s.text,image:s.image||null};
+    return{type:'image',url:s.url};
+  }).filter(s=>{
+    if(s.type==='image')return!!s.url;
+    return true;
+  });
+  
+  const guide={
+    id:editingId||genId(),
+    title,
+    preview,
+    thumb,
+    tags,
+    status,
+    steps:cleanSteps,
+    errors:errors.filter(e=>e.trim()),
+    updated_at:new Date().toISOString()
+  };
+  
+  let guides=getStoredGuides();
+  guides=guides.filter(g=>g.id!==guide.id);
+  guides.push(guide);
+  setStoredGuides(guides);
+  
+  if(supabaseReady){
+    saveToSupabase(guide);
+  }else{
+    renderGuideList();
+    resetForm();
+    switchTab('list');
+    showToast('Сохранено локально');
+  }
+}
+
+async function saveToSupabase(guide){
+  try{
+    const{error}=await supabaseClient.from('guides').upsert(guide,{onConflict:'id'});
+    if(error)throw error;
+    renderGuideList();
+    resetForm();
+    switchTab('list');
+    showToast('Сохранено в облако');
+  }catch(err){
+    console.error(err);
+    renderGuideList();
+    resetForm();
+    switchTab('list');
+    showToast('Ошибка сохранения: '+err.message);
+  }
+}
+
+function editGuide(id){
+  const guides=getAllGuides();
+  const g=guides.find(x=>x.id===id);
+  if(!g)return;
+  
+  editingId=g.id;
+  document.getElementById('fTitle').value=g.title;
+  document.getElementById('fPreview').value=g.preview||'';
+  document.getElementById('fThumb').value=g.thumb||'';
+  document.getElementById('fStatus').value=g.status||'works';
+  document.getElementById('fTagAI').checked=(g.tags||[]).includes('AI');
+  
+  steps=(g.steps||[]).map(s=>{
+    if(s.type==='image')return{type:'image',url:s.url||''};
+    return{type:'step',text:s.text,image:s.image||''};
+  });
+  errors=(g.errors||[]).map(e=>e);
+  
+  renderSteps();
+  renderErrors();
+  
+  if(g.thumb)loadThumbPreview(g.thumb);
+  else{
+    document.getElementById('uploadPlaceholder').style.display='block';
+    document.getElementById('uploadPreview').style.display='none';
+  }
+  
+  document.getElementById('editingHeader').classList.add('show');
+  document.getElementById('editingTitle').textContent=g.title;
+  
+  switchTab('editor');
+  document.getElementById('tabEditor').scrollTop=0;
+}
+
+function deleteGuide(id){
+  if(!confirm('Удалить гайд?'))return;
+  let guides=getStoredGuides();
+  guides=guides.filter(g=>g.id!==id);
+  setStoredGuides(guides);
+  
+  if(supabaseReady){
+    deleteFromSupabase(id);
+  }else{
+    renderGuideList();
+    if(editingId===id)resetForm();
+    showToast('Удалено локально');
+  }
+}
+
+async function deleteFromSupabase(id){
+  try{
+    const{error}=await supabaseClient.from('guides').delete().eq('id',id);
+    if(error)throw error;
+    renderGuideList();
+    if(editingId===id)resetForm();
+    showToast('Удалено из облака');
+  }catch(err){
+    console.error(err);
+    renderGuideList();
+    if(editingId===id)resetForm();
+    showToast('Ошибка удаления: '+err.message);
+  }
+}
+
+function exportJSON(){
+  const guides=getAllGuides();
+  const json=JSON.stringify(guides,null,2);
+  navigator.clipboard.writeText(json).then(()=>showToast('JSON скопирован')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=json;
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    showToast('JSON скопирован');
+  });
+}
+
+function doImport(){
+  const text=document.getElementById('importText').value.trim();
+  if(!text){showToast('Вставьте JSON');return}
+  try{
+    const imported=JSON.parse(text);
+    if(!Array.isArray(imported)){showToast('Нужен массив JSON');return}
+    const guides=getStoredGuides();
+    imported.forEach(g=>{
+      if(!g.id)g.id=genId();
+      if(!g.title)return;
+      const idx=guides.findIndex(x=>x.id===g.id);
+      if(idx>=0)guides[idx]=g;
+      else guides.push(g);
+    });
+    setStoredGuides(guides);
+    renderGuideList();
+    document.getElementById('importText').value='';
+    showToast('Импортировано '+imported.length+' гайдов');
+  }catch(e){showToast('Ошибка JSON: '+e.message)}
+}
+
+function clearAll(){
+  if(!confirm('Удалить ВСЕ сохранённые гайды?'))return;
+  setStoredGuides([]);
+  renderGuideList();
+  resetForm();
+  showToast('Все гайды удалены');
+}
+
+if(window.Telegram&&window.Telegram.WebApp){window.Telegram.WebApp.ready();window.Telegram.WebApp.expand();}
+</script>
+</body>
+</html>
