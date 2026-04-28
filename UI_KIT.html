@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>UI Kit — Vercel × Liquid Glass</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+
+.section-label{
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;
+  color:#666;padding:40px 20px 12px;
+}
+
+/* ============================================
+   VERCEL MINIMAL
+   ============================================ */
+.vercel{
+  background:#000;padding:20px;border-radius:16px;margin:0 16px 40px;
+  border:1px solid #1a1a1a;
+}
+.vercel h2{font-size:20px;font-weight:700;margin-bottom:20px;color:#ededed}
+
+/* --- Buttons --- */
+.vercel .v-btn{
+  padding:10px 20px;border-radius:8px;border:none;font-size:14px;font-weight:500;
+  cursor:pointer;transition:all .15s;font-family:inherit;
+}
+.vercel .v-btn.primary{background:#fff;color:#000}
+.vercel .v-btn.primary:hover{background:#e0e0e0}
+.vercel .v-btn.secondary{background:#111;color:#ededed;border:1px solid #333}
+.vercel .v-btn.secondary:hover{background:#1a1a1a}
+.vercel .v-btn.ghost{background:transparent;color:#666;border:1px solid #222}
+.vercel .v-btn.ghost:hover{background:#111;color:#ededed}
+.vercel .v-btn:active{transform:scale(0.97)}
+
+/* --- Liquid Glass Button --- */
+.vercel .v-btn.glass{
+  position:relative;overflow:hidden;
+  background:rgba(255,255,255,0.06);color:#ededed;
+  border:1px solid rgba(255,255,255,0.1);
+  backdrop-filter:blur(40px) saturate(180%);
+  -webkit-backdrop-filter:blur(40px) saturate(180%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.1),
+    0 2px 8px rgba(0,0,0,0.4);
+}
+.vercel .v-btn.glass::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:50%;
+  background:linear-gradient(180deg,rgba(255,255,255,0.08) 0%,transparent 100%);
+  border-radius:8px 8px 0 0;pointer-events:none;
+}
+.vercel .v-btn.glass:hover{
+  background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.15);
+}
+.vercel .v-btn.glass:active{transform:scale(0.97)}
+
+/* --- Tabs --- */
+.vercel .v-tabs{
+  display:flex;gap:0;border-bottom:1px solid #222;margin-bottom:16px;
+}
+.vercel .v-tab{
+  padding:10px 16px;font-size:13px;font-weight:500;color:#666;
+  cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;
+}
+.vercel .v-tab.active{color:#fff;border-bottom-color:#fff}
+
+/* --- Cards --- */
+.vercel .v-card{
+  border-radius:12px;
+  background:#0a0a0a;border:1px solid #1a1a1a;
+  margin-bottom:10px;transition:all .15s;
+  position:relative;
+  align-self:start;
+}
+.vercel .v-card::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:60%;
+  background:linear-gradient(180deg,transparent 0%,rgba(0,0,0,0.8) 100%);
+  pointer-events:none;border-radius:0 0 12px 12px;
+}
+.vercel .v-card:hover{border-color:#333}
+.vercel .v-card-thumb{
+  width:100%;height:120px;
+  position:relative;overflow:hidden;
+  border-radius:12px 12px 0 0;
+}
+.vercel .v-card-body{padding:12px 14px;position:relative;z-index:1}
+.vercel .v-card-title{font-size:14px;font-weight:600;color:#ededed}
+.vercel .v-card-sub{font-size:12px;color:#666;margin-top:3px}
+
+/* --- Input --- */
+.vercel .v-input{
+  width:100%;padding:10px 14px;border-radius:8px;
+  background:#0a0a0a;border:1px solid #222;
+  color:#ededed;font-size:14px;outline:none;
+  transition:border-color .15s;font-family:inherit;
+}
+.vercel .v-input:focus{border-color:#fff}
+.vercel .v-input::placeholder{color:#444}
+
+/* --- Chips --- */
+.vercel .v-chip{
+  display:inline-block;padding:6px 14px;border-radius:6px;
+  background:#111;border:1px solid #222;
+  font-size:12px;font-weight:500;color:#888;
+  cursor:pointer;transition:all .15s;font-family:inherit;
+}
+.vercel .v-chip.active{background:#fff;color:#000;border-color:#fff}
+
+/* --- Badges --- */
+.vercel .v-badge{
+  display:inline-block;padding:3px 8px;border-radius:4px;
+  font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;
+}
+.vercel .v-badge.free{background:#0a2a1a;color:#4ade80}
+.vercel .v-badge.pro{background:#1a0a2a;color:#a78bfa}
+
+.vercel .v-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.divider{height:1px;background:rgba(255,255,255,0.05);margin:16px 0}
+
+/* --- List Items --- */
+.vercel .v-list-item{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 0;border-bottom:1px solid #1a1a1a;
+}
+.vercel .v-list-thumb{
+  width:44px;height:44px;border-radius:8px;
+  background:#111;flex-shrink:0;
+}
+.vercel .v-list-body{flex:1}
+.vercel .v-list-title{font-size:14px;font-weight:600;color:#ededed}
+.vercel .v-list-sub{font-size:12px;color:#666;margin-top:2px}
+
+/* --- Specimen Label --- */
+.specimen{
+  font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;
+  color:#444;margin-bottom:10px;
+}
+
+/* ============================================
+   BOTTOM TAB BAR — LIQUID GLASS VARIANTS
+   ============================================ */
+
+/* --- Variant 1: Telegram iOS 26 — Pill active tab --- */
+.tabbar-v1{
+  display:flex;align-items:center;justify-content:center;
+  padding:6px;
+  border-radius:28px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+  backdrop-filter:blur(40px) saturate(180%);
+  -webkit-backdrop-filter:blur(40px) saturate(180%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    inset 0 -1px 0 rgba(0,0,0,0.3),
+    0 4px 24px rgba(0,0,0,0.5);
+  position:relative;overflow:hidden;
+  margin-bottom:16px;
+}
+.tabbar-v1::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:50%;
+  background:linear-gradient(180deg,rgba(255,255,255,0.06) 0%,transparent 100%);
+  border-radius:28px 28px 0 0;pointer-events:none;
+}
+.tabbar-v1 .tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;
+  padding:13px 4px;border-radius:22px;
+  font-size:12px;font-weight:600;color:rgba(255,255,255,0.35);
+  cursor:pointer;transition:all .3s cubic-bezier(0.4,0,0.2,1);
+  position:relative;z-index:1;
+}
+.tabbar-v1 .tab .tab-icon{
+  display:flex;align-items:center;justify-content:center;
+  transition:all .3s cubic-bezier(0.4,0,0.2,1);
+}
+.tabbar-v1 .tab .tab-icon svg{width:24px;height:24px;fill:currentColor}
+.tabbar-v1 .tab.active{
+  color:#fff;
+  background:rgba(255,255,255,0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.12),
+    inset 0 -1px 0 rgba(0,0,0,0.1),
+    0 2px 8px rgba(0,0,0,0.3);
+}
+.tabbar-v1 .tab.active::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:50%;
+  background:linear-gradient(180deg,rgba(255,255,255,0.08) 0%,transparent 100%);
+  border-radius:22px 22px 0 0;pointer-events:none;
+}
+.tabbar-v1 .tab.active .tab-icon{
+  background:transparent;
+  box-shadow:none;
+}
+
+</style>
+</head>
+<body>
+
+<div class="section-label">VERCEL MINIMAL + LIQUID GLASS BUTTONS</div>
+<div class="vercel">
+  <h2>Vercel + Liquid Glass</h2>
+
+  <!-- Tabs -->
+  <div class="specimen">Tabs</div>
+  <div style="margin-bottom:16px">
+    <div class="v-tabs">
+      <div class="v-tab active">Sites</div>
+      <div class="v-tab">Backgrounds</div>
+      <div class="v-tab">Templates</div>
+      <div class="v-tab">Courses</div>
+    </div>
+  </div>
+
+  <!-- Chips -->
+  <div class="specimen">Chips</div>
+  <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
+    <div class="v-chip active">All 90</div>
+    <div class="v-chip">Free 28</div>
+    <div class="v-chip">Premium 62</div>
+  </div>
+
+  <!-- Input -->
+  <div class="specimen">Input</div>
+  <input class="v-input" placeholder="Search..." style="margin-bottom:16px">
+
+  <!-- Cards: standard -->
+  <div class="specimen">Cards — Standard</div>
+  <div class="v-grid" style="margin-bottom:16px">
+    <div class="v-card">
+      <div class="v-card-thumb"></div>
+      <div class="v-card-body">
+        <div class="v-card-title">Datacore Booking</div>
+        <div class="v-card-sub">SaaS · hero</div>
+      </div>
+      <span class="v-badge free" style="position:absolute;top:8px;right:8px">Free</span>
+    </div>
+    <div class="v-card">
+      <div class="v-card-thumb"></div>
+      <div class="v-card-body">
+        <div class="v-card-title">Nexar</div>
+        <div class="v-card-sub">Hero Section · hero</div>
+      </div>
+      <span class="v-badge pro" style="position:absolute;top:8px;right:8px">Pro</span>
+    </div>
+  </div>
+
+  <!-- List Items -->
+  <div class="specimen">List Items</div>
+  <div class="v-list-item">
+    <div class="v-list-thumb"></div>
+    <div class="v-list-body">
+      <div class="v-list-title">Celestia</div>
+      <div class="v-list-sub">Hero Section · hero</div>
+    </div>
+    <span class="v-badge free">Free</span>
+  </div>
+  <div class="v-list-item">
+    <div class="v-list-thumb"></div>
+    <div class="v-list-body">
+      <div class="v-list-title">Liquid Glass Agency</div>
+      <div class="v-list-sub">Landing Page · landing-page</div>
+    </div>
+    <span class="v-badge pro">Pro</span>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Buttons: standard vs glass -->
+  <div class="specimen">Buttons — Standard</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+    <button class="v-btn primary">Primary</button>
+    <button class="v-btn secondary">Secondary</button>
+    <button class="v-btn ghost">Ghost</button>
+  </div>
+
+  <div class="specimen">Buttons — Liquid Glass</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+    <button class="v-btn glass">Glass Button</button>
+    <button class="v-btn glass">Copy Prompt</button>
+    <button class="v-btn glass">Open Link</button>
+  </div>
+</div>
+
+<div style="height:60px"></div>
+
+<div class="section-label">BOTTOM TAB BAR — TELEGRAM iOS 26</div>
+<div style="padding:0 16px 24px">
+  <div class="tabbar-v1">
+    <div class="tab active">
+      <div class="tab-icon"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg></div>
+      Home
+    </div>
+    <div class="tab">
+      <div class="tab-icon"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></div>
+      Search
+    </div>
+    <div class="tab">
+      <div class="tab-icon"><svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/></svg></div>
+      Alerts
+    </div>
+    <div class="tab">
+      <div class="tab-icon"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
+      Profile
+    </div>
+  </div>
+</div>
+
+<div style="height:60px"></div>
+
+<script>
+document.querySelectorAll('.v-tab').forEach(tab => {
+  tab.addEventListener('click', function() {
+    this.parentElement.querySelectorAll('.v-tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+document.querySelectorAll('.v-chip').forEach(chip => {
+  chip.addEventListener('click', function() {
+    this.parentElement.querySelectorAll('.v-chip').forEach(c => c.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+document.querySelectorAll('.tabbar-v1').forEach(bar => {
+  bar.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+      this.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+});
+</script>
+</body>
+</html>
